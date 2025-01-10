@@ -220,7 +220,7 @@ export async function POST(req: NextRequest) {
       job_offer: data.job_offer,
       job_offer_description: data.job_offer_description,
       company_id: data.company_id,
-      opened_at: data.opened_at ? new Date(data.opened_at) : null,
+      opened_at: data.opened_at ? new Date(data.opened_at) : new Date(), // Usa la fecha actual si no se proporciona
       closed_at: data.closed_at ? new Date(data.closed_at) : null,
       pre_filtered: data.pre_filtered,
       status: data.status,
