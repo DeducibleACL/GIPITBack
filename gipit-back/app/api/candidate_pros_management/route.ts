@@ -101,3 +101,83 @@ export async function GET(req: NextRequest) {
     }
   }
 }
+
+export async function POST(req: NextRequest) {
+  try {
+    const data = await req.json();
+    console.log('Datos recibidos:', data); // Log para debug
+
+    const {
+      candidate_id,
+      eval_stack,
+      eval_comunicacion,
+      eval_motivacion,
+      eval_cumplimiento,
+    } = data;
+
+    // Verificar que los datos existen
+    if (!candidate_id) {
+      return NextResponse.json(
+        { error: 'candidate_id es requerido' },
+        { status: 400 }
+      );
+    }
+
+    console.log('Creando nueva evaluación...'); // Log para debug
+    const newEvaluation = await prisma.post_sales_activities.create({
+      data: {
+        candidate_management_id: candidate_id,
+        date: new Date(),
+        eval_stack: eval_stack || 0,
+        eval_comunicacion: eval_comunicacion || 0,
+        eval_motivacion: eval_motivacion || 0,
+        eval_cumplimiento: eval_cumplimiento || 0,
+      },
+    });
+    console.log('Nueva evaluación creada:', newEvaluation); // Log para debug
+
+    console.log('Obteniendo todas las evaluaciones...'); // Log para debug
+    const allEvaluations = await prisma.post_sales_activities.findMany({
+      where: {
+        candidate_management_id: candidate_id,
+      },
+    });
+    console.log('Evaluaciones encontradas:', allEvaluations.length); // Log para debug
+
+    const avgRate = allEvaluations.reduce((acc, curr) => {
+      const evalStack = curr.eval_stack || 0;
+      const evalComunicacion = curr.eval_comunicacion || 0;
+      const evalMotivacion = curr.eval_motivacion || 0;
+      const evalCumplimiento = curr.eval_cumplimiento || 0;
+      
+      const evalAvg = (evalStack + evalComunicacion + 
+                      evalMotivacion + evalCumplimiento) / 4;
+      return acc + evalAvg;
+    }, 0) / allEvaluations.length;
+
+    console.log('Actualizando promedio...', avgRate); // Log para debug
+    await prisma.candidate_management.update({
+      where: {
+        id: candidate_id,
+      },
+      data: {
+        rate: avgRate,
+        updated_at: new Date(),
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: newEvaluation,
+      message: 'Evaluación creada y promedio actualizado'
+    });
+  } catch (error) {
+    console.error('Error detallado:', error); // Log detallado del error
+    return NextResponse.json(
+      { error: 'Error al crear la evaluación', details: error },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect(); // Asegurarse de cerrar la conexión
+  }
+}

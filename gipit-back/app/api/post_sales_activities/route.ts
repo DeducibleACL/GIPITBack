@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
       eval_cumplimiento,
       acciones_acl,
       proyecction,
+      candidate_management_id,
     } = await req.json();
 
     const postSalesActivity = await prisma.post_sales_activities.create({
@@ -63,11 +64,13 @@ export async function POST(req: NextRequest) {
         eval_cumplimiento,
         acciones_acl,
         proyecction,
-        updated_at: new Date(), // Automatically update the timestamp
+        candidate_management_id,
+        updated_at: new Date(),
       },
     });
     return NextResponse.json(postSalesActivity, { status: 201 });
   } catch (error) {
+    console.error('Error detallado:', error);
     return NextResponse.json(
       { error: `Error creating post sales activity - ${error}` },
       { status: 500 }
