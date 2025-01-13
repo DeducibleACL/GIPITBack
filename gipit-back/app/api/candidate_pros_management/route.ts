@@ -4,28 +4,18 @@ import { NextRequest } from 'next/server';
 
 const prisma = new PrismaClient();
 
-// Definir una interfaz más específica para la cláusula where
-interface WhereClause {
-  AND: {
-    candidates?: {
-      name?: {
-        contains: string;
-        mode: 'insensitive';
-      };
-    };
-    status?: string;
-  }[];
-}
 
 /**
  * Obtener todos los registros de gestión de candidatos
  */
 export async function GET(req: NextRequest) {
   try {
-    const url = new URL(req.url);
-    const page = parseInt(url.searchParams.get('page') || '1', 10);
-    const query = url.searchParams.get('query') || '';
-    const status = url.searchParams.get('status') || '';
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const query = searchParams.get('query') || '';
+    const status = searchParams.get('status') || '';
+    const userRole = searchParams.get('userRole');
+    const companyId = searchParams.get('companyId');
     const pageSize = 15;
 
     if (page < 1) {
@@ -35,7 +25,28 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const whereClause: WhereClause = { AND: [] };
+    const whereClause: {
+      AND: Array<{
+        management?: {
+          company_id: number;
+        };
+        candidates?: {
+          name: {
+            contains: string;
+            mode: 'insensitive';
+          };
+        };
+        status?: string;
+      }>;
+    } = { AND: [] };
+
+    if (userRole === 'client' && companyId) {
+      whereClause.AND.push({
+        management: {
+          company_id: parseInt(companyId)
+        }
+      });
+    }
 
     if (query) {
       whereClause.AND.push({
