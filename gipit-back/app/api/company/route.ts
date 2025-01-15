@@ -66,11 +66,21 @@ const prisma = new PrismaClient();
 
 export async function GET() {
   try {
+    // Consulta para incluir las jefaturas (management) de cada compañía
     const companies = await prisma.company.findMany({
       orderBy: {
-        name: "asc", // Ordenar por nombre en orden ascendente (A-Z)
+        name: "asc",
+      },
+      include: {
+        management: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
       },
     });
+
     return NextResponse.json(companies, { status: 200 });
   } catch (error) {
     return NextResponse.json(

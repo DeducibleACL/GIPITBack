@@ -115,10 +115,13 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     console.log("URL completa recibida:", req.url);
     const page = parseInt(url.searchParams.get('page') || '1', 10);
-    const query = url.searchParams.get('query') || ''; // Captura el parámetro de búsqueda
-    const companyId = url.searchParams.get('companyId') || ''; // Captura el parámetro de ID de compañía
+    const query = url.searchParams.get('query') || '';
+    const companyId = url.searchParams.get('companyId') || '';
     const status = url.searchParams.get('status') || '';
+    const userRole = url.searchParams.get('userRole') || ''; // Nuevo parámetro
+    const userCompanyId = url.searchParams.get('userCompanyId') || ''; // Nuevo parámetro
     const pageSize = 15;
+
 
     console.log(`Compania seleccionada filtro: ${companyId}`);
     console.log(`Obteniendo procesos para la página: ${page}`);
@@ -129,6 +132,10 @@ export async function GET(req: NextRequest) {
 
     // Construir la cláusula `where` para los filtros
     const where: Prisma.processWhereInput = {};
+
+    if (userRole === 'client' && userCompanyId) {
+      where.company_id = parseInt(userCompanyId);
+    }
 
     // Agregar el filtro de `query` si está presente
     if (query) {
